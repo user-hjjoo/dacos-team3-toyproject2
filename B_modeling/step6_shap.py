@@ -1,5 +1,5 @@
 """
-Step6. 모델 해석 (SHAP) - 팀원2 담당
+Step6. 모델 해석 (SHAP)
 - Step5(step5_model_pipeline.py)에서 저장한 best_model.pkl, train_test_split.pkl을 불러와
   "어떤 피처가 예측에 얼마나 영향을 미치는지" 분석
 - 지금은 더미 데이터로 학습된 모델이라 SHAP 결과 자체는 의미 없음 (코드가 에러 없이 도는지만 확인)

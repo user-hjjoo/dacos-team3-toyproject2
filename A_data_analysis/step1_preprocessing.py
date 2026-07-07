@@ -136,7 +136,7 @@ for col in FINAL_COLUMNS:
 dummy_final = dummy[FINAL_COLUMNS].copy()
 
 #더미 데이터 main_category 맞추기
-dummy_final['main_category'] = dummy_final['main_category'].replace({'Other': 'Others', 'other': 'Others', 'others': 'Others'})
+dummy_final['main_category'] = dummy_final['main_category'].replace({'Others': 'Others', 'other': 'Others', 'others': 'Others'})
 dummy_final.loc[~dummy_final['main_category'].isin(allowed_categories), 'main_category'] = 'Others'
 
 
