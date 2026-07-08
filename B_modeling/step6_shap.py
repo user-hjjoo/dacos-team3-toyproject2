@@ -6,14 +6,15 @@ Step6. 모델 해석 (SHAP)
 - 실제 데이터로 step5를 재실행해서 pkl이 갱신되면, 이 파일은 수정 없이 그대로 재실행하면 됨
 """
 
+import math
 import joblib
 import numpy as np
 import shap
 import matplotlib.pyplot as plt
 
 # ── Step5에서 저장한 파일 불러오기 ──
-pipeline = joblib.load('best_model.pkl')          # 전처리 + 모델이 합쳐진 sklearn Pipeline
-X_train, X_test, y_train, y_test = joblib.load('train_test_split.pkl')
+pipeline = joblib.load(r'result\modeling\best_model.pkl')          # 전처리 + 모델이 합쳐진 sklearn Pipeline
+X_train, X_test, y_train, y_test = joblib.load(r'result\modeling\train_test_split.pkl')
 
 # ── Pipeline에서 전처리 단계와 모델 단계를 분리 ──
 # SHAP은 "전처리가 끝난 숫자 데이터"와 "모델"을 따로 필요로 하기 때문
@@ -47,7 +48,7 @@ shap_values = explainer(X_test_transformed)
 plt.figure()
 shap.summary_plot(shap_values, X_test_transformed, feature_names=feature_names, show=False)
 plt.tight_layout()
-plt.savefig('shap_summary_plot.png', dpi=150)
+plt.savefig(r'result\shap\shap_summary_plot.png', dpi=150)
 plt.close()
 print("shap_summary_plot.png 저장 완료")
 
@@ -59,13 +60,34 @@ print("\n=== 피처 중요도 순위 (SHAP 절댓값 평균 기준) ===")
 for rank, (name, value) in enumerate(importance_ranking, start=1):
     print(f"{rank}. {name}: {value:.4f}")
 
-# ── 3. Dependence Plot: 특정 피처 하나가 예측값에 미치는 영향을 자세히 보기 ──
-# 예시로 중요도 1위 피처에 대해 생성 (나중에 관심있는 피처명으로 바꿔서 여러 개 뽑아볼 수 있음)
-top_feature = importance_ranking[3][0]
-plt.figure()
-shap.dependence_plot(top_feature, shap_values.values, X_test_transformed,
-                      feature_names=feature_names, show=False)
+# ── 3. Dependence Plot: 모든 피처를 한 번에, 하나의 큰 figure에 서브플롯으로 배치 ──
+# - 중요도 순으로 정렬된 순서 그대로 왼쪽 위 -> 오른쪽 아래로 배치
+# - 피처 개수에 따라 격자(grid) 크기를 자동으로 계산
+n_features = len(feature_names)
+n_cols = 4
+n_rows = math.ceil(n_features / n_cols)
+ 
+fig, axes = plt.subplots(n_rows, n_cols, figsize=(n_cols * 4.5, n_rows * 3.8))
+axes = np.array(axes).reshape(-1)  # 1차원으로 펼쳐서 인덱스로 접근하기 쉽게 함
+ 
+for i, (name, _) in enumerate(importance_ranking):
+    shap.dependence_plot(
+        name, shap_values.values, X_test_transformed,
+        feature_names=feature_names,
+        ax=axes[i], show=False,
+    )
+    #axes[i].set_title(name, fontsize=9)
+ 
+# 피처 개수가 격자 칸 수보다 적을 때, 남는 빈 칸은 숨김 처리
+for j in range(n_features, len(axes)):
+    axes[j].axis('off')
+
+for ax in fig.axes:
+    ax.tick_params(labelsize=8)          # 눈금 숫자 크기
+    ax.xaxis.label.set_size(9)           # x축 라벨 크기
+    ax.yaxis.label.set_size(9)           # y축 라벨 크기
+ 
 plt.tight_layout()
-plt.savefig('shap_dependence_plot.png', dpi=150)
+plt.savefig(r'result\shap\shap_dependence_grid.png', dpi=150)
 plt.close()
-print(f"\nshap_dependence_plot.png 저장 완료 (피처: {top_feature})")
+print(f"\nshap_dependence_grid.png 저장 완료 (피처 {n_features}개, {n_rows}x{n_cols} 격자)")
