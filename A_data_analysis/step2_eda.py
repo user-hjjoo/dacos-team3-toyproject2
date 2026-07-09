@@ -222,12 +222,12 @@ print("3-2 박스플롯 + 점 그래프 저장 완료")
 
 # =========================================================
 # 3-2 결과 CSV 만들기
-# 카테고리별 rating_count 중앙값 = Bayesian 공식에 사용할 m
+# 카테고리별 rating_count Q1(25%) = Bayesian 공식에 사용할 m
 # =========================================================
 
 m_table = (
     df.groupby("main_category")["rating_count"]
-    .median()
+    .quantile(0.25)
     .reset_index()
 )
 
