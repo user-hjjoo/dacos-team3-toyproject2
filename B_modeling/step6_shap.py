@@ -11,6 +11,7 @@ import joblib
 import numpy as np
 import shap
 import matplotlib.pyplot as plt
+import pandas as pd
 
 # ── Step5에서 저장한 파일 불러오기 ──
 pipeline = joblib.load(r'result\modeling\best_model.pkl')          # 전처리 + 모델이 합쳐진 sklearn Pipeline
@@ -44,6 +45,13 @@ explainer = shap.Explainer(model, X_train_transformed, feature_names=feature_nam
 # SHAP value: 각 피처가 "이 예측값을 평균 예측값에서 얼마나 밀어올렸는지/내렸는지"를 나타내는 숫자
 shap_values = explainer(X_test_transformed)
 
+shap_raw_df = pd.DataFrame(X_test_transformed, columns=feature_names)
+shap_val_df = pd.DataFrame(shap_values.values, columns=[f"shap_value_{name}" for name in feature_names])
+shap_values_raw_df = pd.concat([shap_raw_df, shap_val_df], axis=1)
+shap_values_raw_df.to_csv(r'result\shap\shap_values_raw.csv', index=False, encoding='utf-8-sig')
+print("shap_values_raw.csv 저장 완료")
+
+
 # ── 1. Summary Plot: 전체적으로 어떤 피처가 중요한지 한눈에 보기 ──
 plt.figure()
 shap.summary_plot(shap_values, X_test_transformed, feature_names=feature_names, show=False)
@@ -59,6 +67,11 @@ importance_ranking = sorted(zip(feature_names, mean_abs_shap), key=lambda x: -x[
 print("\n=== 피처 중요도 순위 (SHAP 절댓값 평균 기준) ===")
 for rank, (name, value) in enumerate(importance_ranking, start=1):
     print(f"{rank}. {name}: {value:.4f}")
+
+
+shap_importance_df = pd.DataFrame(importance_ranking, columns=["feature", "importance"])
+shap_importance_df.to_csv(r'result\shap\shap_importance.csv', index=False, encoding='utf-8-sig')
+print("shap_importance.csv 저장 완료")
 
 # ── 3. Dependence Plot: 모든 피처를 한 번에, 하나의 큰 figure에 서브플롯으로 배치 ──
 # - 중요도 순으로 정렬된 순서 그대로 왼쪽 위 -> 오른쪽 아래로 배치
