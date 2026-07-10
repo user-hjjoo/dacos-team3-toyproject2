@@ -8,7 +8,7 @@ Step4. 피처 엔지니어링
 import pandas as pd
 import numpy as np
 
-DATA_PATH = 'data\\processed\\amazon_preprocessed_no_bayesian_other.csv'  # step1 실제 산출물
+DATA_PATH = 'result\\step3_output\\amazon_final_processed.csv'  # step1 실제 산출물
 
 
 def load_data(path: str) -> pd.DataFrame:
@@ -41,7 +41,7 @@ def log_transform_features(df: pd.DataFrame) -> pd.DataFrame:
     - 어떤 컬럼이 변환됐는지는 check_skewness()의 출력으로 확인 가능
     """
     df = df.copy()
-    candidate_cols = ['discounted_price', 'actual_price', 'discount_percentage', 'rating_count']
+    candidate_cols = ['discounted_price', 'actual_price', 'discount_percentage', 'rating_count', 'review_length']
     decisions = check_skewness(df, candidate_cols)
 
     for col, need_log in decisions.items():
@@ -74,10 +74,10 @@ def build_feature_table(df: pd.DataFrame) -> pd.DataFrame:
     [확인 필요 : product_id를 반드시 포함해서, 나중에 팀원1의 bayesian_rating과
         merge할 수 있게 해야 함 (키 컬럼이 없으면 나중에 합칠 방법이 없음)]
     """
-    price_count_cols = ['discounted_price', 'actual_price', 'discount_percentage', 'rating_count']
+    price_count_cols = ['discounted_price', 'actual_price', 'discount_percentage', 'rating_count', 'review_length']
     resolved_cols = [f'log_{c}' if f'log_{c}' in df.columns else c for c in price_count_cols]
 
-    keep_cols = ['product_id'] + resolved_cols + ['review_length', 'main_category']
+    keep_cols = ['product_id'] + resolved_cols + ['main_category']
     return df[keep_cols]
 
 
@@ -85,14 +85,14 @@ def main():
     df = load_data(DATA_PATH)
     df = log_transform_features(df)
 
-    price_count_cols = ['discounted_price', 'actual_price', 'discount_percentage', 'rating_count']
+    price_count_cols = ['discounted_price', 'actual_price', 'discount_percentage', 'rating_count', 'review_length']
     required_cols = [f'log_{c}' if f'log_{c}' in df.columns else c for c in price_count_cols]
     required_cols += ['main_category']
     df = check_missing(df, required_cols)
 
     feature_table = build_feature_table(df)
 
-    output_path = 'data\\processed\\amazon_preprocessing_final.csv'
+    output_path = 'data\\processed\\amazon_feature_engineering.csv'
     feature_table.to_csv(output_path, index=False)
     print(f"\n최종 피처 테이블 저장 완료: {output_path}")
     print(f"행 개수: {len(feature_table)}, 컬럼: {feature_table.columns.tolist()}")

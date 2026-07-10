@@ -25,12 +25,12 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from xgboost import XGBRegressor
 
 # ── 나중에 Step4 최종 산출물 경로로 교체 ──
-DATA_PATH = 'C:\dacos-team3-toyproject2\data\processed\dummy_amazon.csv'
+DATA_PATH = 'data\\processed\\amazon_model_ready.csv'
 
 # ── 나중에 Step4 최종 피처 테이블의 실제 컬럼명으로 교체 ──
 # 지금은 더미 데이터의 원본 컬럼을 그대로 사용 (가공 없이, 파이프라인 검증용)
 NUMERIC_FEATURES = [
-    'discounted_price', 'actual_price', 'discount_percentage', 'rating_count', 'review_length',
+    'log_discounted_price', 'log_actual_price', 'discount_percentage', 'log_rating_count', 'log_review_length',
 ]
 CATEGORICAL_FEATURES = ['main_category']
 TARGET = 'bayesian_rating'
@@ -122,8 +122,8 @@ def main():
     #    - 성능이 가장 좋은(RMSE 최소) 모델과 train/test 데이터를 파일로 저장
     #    - step6.py에서는 재학습 없이 joblib.load()로 바로 불러와서 사용
     best_model_name = results_df.iloc[0]['model']
-    joblib.dump(trained_pipelines[best_model_name], 'best_model.pkl')
-    joblib.dump((X_train, X_test, y_train, y_test), 'train_test_split.pkl')
+    joblib.dump(trained_pipelines[best_model_name], 'result\\modeling\\best_model.pkl')
+    joblib.dump((X_train, X_test, y_train, y_test), 'result\\modeling\\train_test_split.pkl')
     
     return trained_pipelines, results_df, X_train, X_test, y_train, y_test
 

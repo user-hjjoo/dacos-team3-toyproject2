@@ -1,0 +1,44 @@
+[베이지안 타겟 생성 리포트]
+
+[적용 기준]
+rating_count >= m_value: 믿을만한 상품 -> 원래 rating 유지
+rating_count < m_value: 의심 상품 -> 베이지안 공식 적용
+
+[데이터 요약]
+전체 상품 수: 1350
+믿을만한 상품 수: 1011
+의심 상품 수: 339
+의심 상품 비율: 25.11%
+원래 평점 평균: 4.0919
+bayesian_rating 평균: 4.1106
+평균 보정폭 rating - bayesian_rating: -0.0187
+
+[카테고리별 m, C]
+                 main_category  m_value  category_mean_rating
+       Accessories&Peripherals   1313.0                4.1450
+           Cameras&Photography   5384.2                4.1250
+   ExternalDevices&DataStorage  19747.5                4.3167
+Headphones,Earbuds&Accessories  10259.5                3.9206
+    Heating,Cooling&AirQuality    248.2                3.9905
+                     HomeAudio   2625.8                4.0688
+      HomeStorage&Organization    870.8                4.0250
+          HomeTheater,TV&Video    404.8                4.0712
+        Kitchen&HomeAppliances    623.5                4.0534
+           Mobiles&Accessories   3215.5                4.1258
+             NetworkingDevices  10822.0                4.1633
+           OfficePaperProducts   2560.5                4.2889
+                         Other   3029.0                4.2569
+            WearableTechnology   4497.2                4.0081
+
+[순위 변화 Top 50 중 상위 10개 미리보기]
+                                                                                                                                                                                                                                                                product_name              main_category  rating  rating_count  m_value  is_suspicious  bayesian_rating  rank_change
+                                                                                                                                     Melbon VM-905 2000-Watt Room Heater (ISI Certified, White Color) Ideal Electric Fan Heater for Small to Medium Room/Area (Plastic Body) Heating,Cooling&AirQuality     4.6           9.0    248.2           True           4.0118          892
+                                                                                                                                                       Noise_Colorfit Smart Watch Charger 2 Pin USB Fast Charger Magnetic Charging Cable Adapter (Smart Watch Charger 2 pin)         WearableTechnology     4.5          38.0   4497.2           True           4.0122          869
+Oratech Coffee Frother electric, milk frother electric, coffee beater, cappuccino maker, Coffee Foamer, Mocktail Mixer, Coffee Foam Maker, coffee whisker electric, Froth Maker, coffee stirrers electric, coffee frothers, Coffee Blender, (6 Month Warranty) (Multicolour)     Kitchen&HomeAppliances     4.8          28.0    623.5           True           4.0855          830
+                                                                                                                                                                                        !!1000 Watt/2000-Watt Room Heater!! Fan Heater!!Pure White!!HN-2500!!Made in India!! Heating,Cooling&AirQuality     4.5          11.0    248.2           True           4.0121          829
+                                                                                             Homeistic Applience™ Instant Electric Water Heater Faucet Tap For Kitchen And Bathroom Sink Digital Water Heating Tap with Shower Head ABS Body- Shock Proof (Pack Of 1. White) Heating,Cooling&AirQuality     4.5          19.0    248.2           True           4.0267          814
+                                                                      WANBO X1 Pro (Upgraded) | Native 1080P Full HD | Android 9 | Projector for Home | LED Cinema | 350ANSI | 3900 lumens | WiFi Bluetooth | HDMI ARC | Dolby DTS | 4D Keystone Correction (Global Version)       HomeTheater,TV&Video     4.5           7.0    404.8           True           4.0785          802
+                                                                                                  Fire-Boltt Gladiator 1.96" Biggest Display Smart Watch with Bluetooth Calling, Voice Assistant &123 Sports Modes, 8 Unique UI Interactions, SpO2, 24/7 Heart Rate Tracking         WearableTechnology     4.4          73.0   4497.2           True           4.0144          779
+                                                                                                                                          Amazon Brand - Solimo 65W Fast Charging Braided Type C to C Data Cable | Suitable For All Supported Mobile Phones (1 Meter, Black)    Accessories&Peripherals     3.0           0.0   1313.0           True           4.1450         -755
+                                                                                                                  Gadgetronics Digital Kitchen Weighing Scale & Food Weight Machine for Health, Fitness, Home Baking & Cooking (10 KGs,1 Year Warranty & Batteries Included)     Kitchen&HomeAppliances     4.5          63.0    623.5           True           4.0944          739
+                                                                                                                   Fire-Boltt Tank 1.85" Bluetooth Calling Smart Watch, 123 Sports Mode, 8 UI Interactions, Built in Speaker & Mic, 7 Days Battery & Fire-Boltt Health Suite         WearableTechnology     4.4         768.0   4497.2           True           4.0653          724
