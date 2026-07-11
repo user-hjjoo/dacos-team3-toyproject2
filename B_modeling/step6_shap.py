@@ -22,9 +22,14 @@ X_train, X_test, y_train, y_test = joblib.load(r'result\modeling\train_test_spli
 preprocessor = pipeline.named_steps['preprocess']
 model = pipeline.named_steps['model']
 
+# ── train/test를 다시 합쳐서 전체 데이터(1,350개)로 구성 ──
+# product_id는 X_train/X_test의 인덱스에 들어있으므로, concat 후에도 인덱스로 유지됨
+X_all = pd.concat([X_train, X_test])
+product_ids = X_all.index.tolist()  # 나중에 결과 CSV에 붙일 product_id
+
 # ── 원핫인코딩 등 전처리를 실제로 적용 (사람이 읽는 컬럼 -> 모델이 보는 숫자 배열) ──
 X_train_transformed = preprocessor.transform(X_train)
-X_test_transformed = preprocessor.transform(X_test)
+X_all_transformed = preprocessor.transform(X_all)
 
 # ── 전처리 후 컬럼 이름 가져오기 (원핫인코딩으로 늘어난 컬럼들 포함) ──
 # 예: main_category 1개 컬럼 -> Accessories&Peripherals, Kitchen&HomeAppliances... 14개 컬럼으로 분리됨
@@ -34,45 +39,33 @@ feature_names = preprocessor.get_feature_names_out()
 # (SHAP 일부 시각화 함수가 희소 행렬을 지원하지 않기 때문)
 if hasattr(X_train_transformed, 'toarray'):
     X_train_transformed = X_train_transformed.toarray()
-if hasattr(X_test_transformed, 'toarray'):
-    X_test_transformed = X_test_transformed.toarray()
+if hasattr(X_all_transformed, 'toarray'):
+    X_all_transformed = X_allt_transformed.toarray()
 
 # ── SHAP Explainer 생성 ──
 # shap.Explainer는 모델 종류(선형/트리 등)를 자동으로 감지해서 알맞은 계산 방식을 선택함
 explainer = shap.Explainer(model, X_train_transformed, feature_names=feature_names)
 
-# ── 테스트셋에 대해 SHAP value 계산 ──
+# ── 전체 데이터(1,350개)에 대해 SHAP value 계산 ──
 # SHAP value: 각 피처가 "이 예측값을 평균 예측값에서 얼마나 밀어올렸는지/내렸는지"를 나타내는 숫자
-shap_values = explainer(X_test_transformed)
-
-shap_raw_df = pd.DataFrame(X_test_transformed, columns=feature_names)
-shap_val_df = pd.DataFrame(shap_values.values, columns=[f"shap_value_{name}" for name in feature_names])
-shap_values_raw_df = pd.concat([shap_raw_df, shap_val_df], axis=1)
-shap_values_raw_df.to_csv(r'result\shap\shap_values_raw.csv', index=False, encoding='utf-8-sig')
-print("shap_values_raw.csv 저장 완료")
-
-
+shap_values = explainer(X_all_transformed)
+ 
 # ── 1. Summary Plot: 전체적으로 어떤 피처가 중요한지 한눈에 보기 ──
 plt.figure()
-shap.summary_plot(shap_values, X_test_transformed, feature_names=feature_names, show=False)
+shap.summary_plot(shap_values, X_all_transformed, feature_names=feature_names, show=False)
 plt.tight_layout()
-plt.savefig(r'result\shap\shap_summary_plot.png', dpi=150)
+plt.savefig('result\shap\shap_summary_plot.png', dpi=150)
 plt.close()
 print("shap_summary_plot.png 저장 완료")
-
+ 
 # ── 2. 피처 중요도 순위를 텍스트로도 출력 (그림 없이 빠르게 확인용) ──
 mean_abs_shap = np.abs(shap_values.values).mean(axis=0)
 importance_ranking = sorted(zip(feature_names, mean_abs_shap), key=lambda x: -x[1])
-
+ 
 print("\n=== 피처 중요도 순위 (SHAP 절댓값 평균 기준) ===")
 for rank, (name, value) in enumerate(importance_ranking, start=1):
     print(f"{rank}. {name}: {value:.4f}")
-
-
-shap_importance_df = pd.DataFrame(importance_ranking, columns=["feature", "importance"])
-shap_importance_df.to_csv(r'result\shap\shap_importance.csv', index=False, encoding='utf-8-sig')
-print("shap_importance.csv 저장 완료")
-
+ 
 # ── 3. Dependence Plot: 모든 피처를 한 번에, 하나의 큰 figure에 서브플롯으로 배치 ──
 # - 중요도 순으로 정렬된 순서 그대로 왼쪽 위 -> 오른쪽 아래로 배치
 # - 피처 개수에 따라 격자(grid) 크기를 자동으로 계산
@@ -80,27 +73,46 @@ n_features = len(feature_names)
 n_cols = 4
 n_rows = math.ceil(n_features / n_cols)
  
-fig, axes = plt.subplots(n_rows, n_cols, figsize=(n_cols * 4.5, n_rows * 3.8))
+fig, axes = plt.subplots(n_rows, n_cols, figsize=(n_cols * 4.2, n_rows * 3.6))
 axes = np.array(axes).reshape(-1)  # 1차원으로 펼쳐서 인덱스로 접근하기 쉽게 함
  
 for i, (name, _) in enumerate(importance_ranking):
     shap.dependence_plot(
-        name, shap_values.values, X_test_transformed,
+        name, shap_values.values, X_all_transformed,
         feature_names=feature_names,
         ax=axes[i], show=False,
     )
-    #axes[i].set_title(name, fontsize=9)
+    axes[i].set_title(name, fontsize=9)
  
 # 피처 개수가 격자 칸 수보다 적을 때, 남는 빈 칸은 숨김 처리
 for j in range(n_features, len(axes)):
     axes[j].axis('off')
-
+ 
+# ── 글자 크기 축소 ──
+# dependence_plot이 각 서브플롯마다 컬러바(colorbar)도 별도 축으로 추가하기 때문에,
+# axes 리스트가 아니라 fig.axes 전체(서브플롯 + 컬러바)를 순회해야 컬러바 글자도 같이 줄어듦
 for ax in fig.axes:
-    ax.tick_params(labelsize=8)          # 눈금 숫자 크기
-    ax.xaxis.label.set_size(9)           # x축 라벨 크기
-    ax.yaxis.label.set_size(9)           # y축 라벨 크기
+    ax.tick_params(labelsize=7)          # 눈금 숫자 크기
+    ax.xaxis.label.set_size(8)           # x축 라벨 크기
+    ax.yaxis.label.set_size(8)           # y축 라벨 크기
  
 plt.tight_layout()
-plt.savefig(r'result\shap\shap_dependence_grid.png', dpi=150)
+plt.savefig('result\shap\shap_dependence_grid.png', dpi=150)
 plt.close()
 print(f"\nshap_dependence_grid.png 저장 완료 (피처 {n_features}개, {n_rows}x{n_cols} 격자)")
+ 
+# ── 4. 팀원3(대시보드)에게 넘길 CSV 저장 ──
+# B_shap_importance.csv: 피처별 평균 중요도 (막대그래프용)
+importance_df = pd.DataFrame(importance_ranking, columns=['feature', 'importance'])
+importance_df.to_csv('result\shap\shap_importance.csv', index=False)
+print("\nshap_importance.csv 저장 완료")
+ 
+# B_shap_values_raw.csv: product_id + 전처리된 피처값 + 피처별 SHAP value
+# -> 대시보드에서 "상품 하나 선택 -> 이 상품은 왜 이렇게 예측됐는지" 설명(waterfall)에 사용
+raw_df = pd.DataFrame(X_all_transformed, columns=feature_names)
+for i, name in enumerate(feature_names):
+    raw_df[f'shap_value_{name}'] = shap_values.values[:, i]
+raw_df.insert(0, 'product_id', product_ids)
+ 
+raw_df.to_csv('result\shap\shap_values_raw.csv', index=False)
+print(f"shap_values_raw.csv 저장 완료 (상품 {len(raw_df)}개, product_id 포함)")

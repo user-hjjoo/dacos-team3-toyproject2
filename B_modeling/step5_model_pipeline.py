@@ -88,9 +88,11 @@ def main():
     6. 학습된 모델들과 데이터 분할 결과를 반환 (다음 단계인 SHAP 해석에서 재사용하기 위함)
     """
     # 1. 데이터 로드
-    df = load_data(DATA_PATH)
+    df = load_data(DATA_PATH).set_index('product_id')
 
     # 2. 피처(X)/타겟(y) 분리
+    # product_id를 완전히 버리지 않고 인덱스로 유지 -> 나중에 SHAP 해석 시
+    # "이 행이 어떤 상품이었는지" 되짚을 수 있게 함
     X = df[NUMERIC_FEATURES + CATEGORICAL_FEATURES]
     y = df[TARGET]
 
