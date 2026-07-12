@@ -147,13 +147,33 @@ st.markdown("#### 카테고리 상세 정보")
 selected_detail = st.selectbox("카테고리 선택", sorted(df["main_category"].unique().tolist()), key="detail_category")
 
 cat_products = df[df["main_category"] == selected_detail]
-cat_m_value = m_df.loc[m_df["main_category"] == selected_detail, "m_value"].values[0]
+cat_q1_m = m_df.loc[m_df["main_category"] == selected_detail, "m_value"].values[0]
+cat_median_m = cat_products["rating_count"].median()
 
-d1, d2, d3, d4 = st.columns(4)
+d1, d2, d3, d4, d5 = st.columns(5)
 d1.metric("상품 수", f"{len(cat_products):,} 개")
 d2.metric("평균 리뷰 수", f"{cat_products['rating_count'].mean():,.0f} 개")
-d3.metric("Q1 기반 m값", f"{cat_m_value:,.1f}")
-d4.metric("평균 평점", f"{cat_products['rating'].mean():.2f} ⭐")
+d3.metric("중앙값 기반 m값", f"{cat_median_m:,.1f}")
+d4.metric("Q1 기반 m값", f"{cat_q1_m:,.1f}")
+d5.metric("평균 평점", f"{cat_products['rating'].mean():.2f} ⭐")
+
+# --- m값 선택 근거: 중앙값 vs Q1 비교 ---
+st.markdown("##### 📐 m값 선택 근거: 중앙값 vs Q1 비교")
+
+n_total = len(cat_products)
+suspect_median = int((cat_products["rating_count"] < cat_median_m).sum())
+suspect_q1 = int((cat_products["rating_count"] < cat_q1_m).sum())
+pct_median = suspect_median / n_total * 100
+pct_q1 = suspect_q1 / n_total * 100
+
+st.markdown(
+    f"- 중앙값 기준 m 사용 시 의심 상품 수: **{suspect_median}개** (해당 카테고리 상품의 **{pct_median:.1f}%**)\n"
+    f"- Q1 기준 m 사용 시 의심 상품 수: **{suspect_q1}개** (해당 카테고리 상품의 **{pct_q1:.1f}%**)"
+)
+st.caption(
+    "※ '의심 상품'은 해당 카테고리의 m값보다 리뷰 수가 적어, 보정 평점 산정 시 원래 평점보다 "
+    "카테고리 평균 쪽으로 크게 끌어당겨지는 상품을 의미합니다."
+)
 
 st.markdown("---")
 
@@ -163,5 +183,7 @@ st.markdown("---")
 st.subheader("✅ EDA 페이지 최종 결론")
 st.success(
     "- 평점만으로 상품을 비교하기 어렵습니다.\n"
-    "- 리뷰 수와 카테고리 특성을 함께 고려한 **베이지안 보정 평점**이 필요합니다."
+    "- 리뷰 수와 카테고리 특성을 함께 고려한 **베이지안 보정 평점**이 필요합니다.\n"
+    "- m을 중앙값으로 설정할 경우 의심 상품이 과도하게 많아지고, Q1 기준 m값 역시 충분히 큰 값이므로 "
+    "**Q1을 최종 채택**하였습니다."
 )

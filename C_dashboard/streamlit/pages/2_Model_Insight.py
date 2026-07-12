@@ -34,9 +34,15 @@ def load_shap_raw() -> pd.DataFrame:
     return pd.read_csv(DATA_DIR / "B_shap_values_raw.csv")
 
 
+@st.cache_data
+def load_products() -> pd.DataFrame:
+    return pd.read_csv(DATA_DIR / "A_amazon_final_processed.csv")
+
+
 metrics_df = load_model_metrics()
 shap_df = load_shap_importance()
 shap_raw = load_shap_raw()
+products_df = load_products()
 
 st.title("🧠 모델 인사이트 페이지")
 st.caption("모델 성능 비교와 SHAP 해석을 통해, 보정 평점 예측에 영향을 준 주요 요인을 살펴봅니다.")
@@ -60,6 +66,18 @@ fig1 = px.bar(
 fig1.update_traces(texttemplate="%{text:.4f}", textposition="outside")
 fig1.update_layout(height=450, showlegend=False)
 st.plotly_chart(fig1, use_container_width=True)
+
+st.markdown("#### 📋 전체 모델 성능 비교표")
+metrics_display = (
+    metrics_df.sort_values("rmse")
+    .rename(columns={"model": "모델", "rmse": "RMSE", "mae": "MAE", "r2": "R²"})
+    .reset_index(drop=True)
+)
+st.dataframe(
+    metrics_display.style.format({"RMSE": "{:.4f}", "MAE": "{:.4f}", "R²": "{:.4f}"}),
+    use_container_width=True,
+    hide_index=True,
+)
 
 st.markdown(f"#### 🏆 Best Model: **{best_model_row['model']}**")
 b1, b2, b3 = st.columns(3)
@@ -196,6 +214,82 @@ with dep_tab3:
         "💡 가격 변수는 리뷰 수나 할인율에 비해 한 방향으로 뚜렷한 관계가 나타나지 않아, "
         "가격대와 다른 변수의 상호작용에 따라 영향이 달라지는 것으로 볼 수 있습니다."
     )
+
+st.markdown("---")
+
+# ============================================================
+# 3-4. 개별 상품 예측 설명
+# ============================================================
+st.markdown("## 3-4. 개별 상품 예측 설명")
+st.caption("특정 상품 하나를 선택하면, 어떤 요인이 이 상품의 예측값을 밀어올렸는지/내렸는지 보여줍니다.")
+
+# 선택창에는 상품명을 함께 보여주되, 실제 선택 기준은 product_id
+product_options_df = products_df[["product_id", "product_name"]].drop_duplicates(subset="product_id")
+option_labels = (product_options_df["product_id"] + " | " + product_options_df["product_name"]).tolist()
+label_to_id = dict(zip(option_labels, product_options_df["product_id"]))
+
+selected_label = st.selectbox("상품 선택 (product_id)", sorted(option_labels), key="shap_product_select")
+selected_pid = label_to_id[selected_label]
+
+# 상품 기본 정보 카드
+prod_info = products_df.loc[products_df["product_id"] == selected_pid].iloc[0]
+p1, p2, p3, p4 = st.columns(4)
+p1.metric("카테고리", prod_info["main_category"])
+p2.metric("원래 평점", f"{prod_info['rating']:.2f} ⭐")
+p3.metric("리뷰 수", f"{prod_info['rating_count']:,.0f} 개")
+p4.metric("보정 평점", f"{prod_info['bayesian_rating']:.2f} ⭐")
+
+# 해당 상품의 SHAP 값 추출
+row = shap_raw.loc[shap_raw["product_id"] == selected_pid].iloc[0]
+shap_cols = [c for c in shap_raw.columns if c.startswith("shap_value_")]
+
+contrib_rows = []
+for shap_col in shap_cols:
+    feature_col = shap_col.replace("shap_value_", "", 1)
+    contrib_rows.append({
+        "feature": feature_col,
+        "feature_kr": FEATURE_NAME_MAP.get(feature_col, feature_col),
+        "feature_value": row[feature_col],
+        "shap_value": row[shap_col],
+    })
+contrib_df = pd.DataFrame(contrib_rows)
+
+# 영향력(절대값) 기준 상위 8개만 표시
+top_contrib = contrib_df.reindex(contrib_df["shap_value"].abs().sort_values(ascending=True).index).tail(8)
+top_contrib["색상"] = top_contrib["shap_value"].apply(lambda v: "#54A24B" if v >= 0 else "#E45756")
+
+fig4 = go.Figure(
+    go.Bar(
+        x=top_contrib["shap_value"],
+        y=top_contrib["feature_kr"],
+        orientation="h",
+        marker_color=top_contrib["색상"],
+        text=[f"{v:+.3f}" for v in top_contrib["shap_value"]],
+        textposition="outside",
+    )
+)
+fig4.add_vline(x=0, line_dash="dash", line_color="gray")
+product_title = prod_info["product_name"]
+if len(product_title) > 30:
+    product_title = product_title[:30] + "..."
+fig4.update_layout(
+    title=f"'{product_title}' 예측 기여도 (상위 8개 요인)",
+    xaxis_title="SHAP value (양수: 예측값 상승 / 음수: 예측값 하락)",
+    yaxis_title="피처",
+    height=460,
+)
+st.plotly_chart(fig4, use_container_width=True)
+
+top_positive = contrib_df.loc[contrib_df["shap_value"].idxmax()]
+top_negative = contrib_df.loc[contrib_df["shap_value"].idxmin()]
+
+st.info(
+    f"💡 **인사이트**: 이 상품은 **{top_positive['feature_kr']}**(값: {top_positive['feature_value']:.2f})가 "
+    f"예측값을 가장 크게 끌어올렸고(+{top_positive['shap_value']:.3f}), "
+    f"**{top_negative['feature_kr']}**(값: {top_negative['feature_value']:.2f})가 "
+    f"가장 크게 끌어내렸습니다({top_negative['shap_value']:.3f})."
+)
+st.caption("※ 위 값은 이 모델이 학습한 패턴 안에서의 상대적 기여도이며, 절대적인 인과관계를 의미하지 않습니다.")
 
 st.markdown("---")
 
