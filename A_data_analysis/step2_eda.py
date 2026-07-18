@@ -22,7 +22,7 @@ from pathlib import Path
 # =========================================================
 
 # 본인 컴퓨터에서 전처리 완료 CSV 파일 위치
-DATA_PATH = Path(r"data\processed\preprocessed_amazon.csv")
+DATA_PATH = Path(r"data\processed\amazon_preprocessed.csv")
 
 # 결과를 저장할 폴더
 OUT_DIR = Path(r"result\eda")

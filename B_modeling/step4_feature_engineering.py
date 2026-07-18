@@ -8,7 +8,7 @@ Step4. 피처 엔지니어링
 import pandas as pd
 import numpy as np
 
-DATA_PATH = 'result\\step3_output\\amazon_final_processed.csv'  # step1 실제 산출물
+DATA_PATH = 'data\\processed\\amazon_final_processed.csv'  # step1 실제 산출물
 
 
 def load_data(path: str) -> pd.DataFrame:
