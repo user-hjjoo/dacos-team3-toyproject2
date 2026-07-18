@@ -22,7 +22,6 @@ DACOS team3 (초보3팀) - 26-1학기 토이 프로젝트
 - **언어/라이브러리**: Python, pandas, scikit-learn, XGBoost, SHAP
 - **통계 기법**: 베이지안 평균(Bayesian Average) 보정
 - **대시보드**: Streamlit, Plotly
-- **버전 관리**: Git / GitHub (Conventional Commits 컨벤션 사용)
 
 ## 분석 파이프라인
 
