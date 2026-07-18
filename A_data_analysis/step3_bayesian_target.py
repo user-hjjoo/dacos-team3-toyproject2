@@ -31,9 +31,9 @@ from pathlib import Path
 # 1. 파일 경로 설정
 # =========================================================
 
-DATA_PATH = Path(r"C:\Users\minky\OneDrive\Desktop\amazon_preprocessed_no_bayesian_other.csv")
+DATA_PATH = Path(r"data\processed\amazon_preprocessed.csv")
 
-OUT_DIR = Path(r"C:\Users\minky\OneDrive\Desktop\bayesian_target_outputs")
+OUT_DIR = Path(r"result\bayesian")
 OUT_DIR.mkdir(exist_ok=True)
 
 

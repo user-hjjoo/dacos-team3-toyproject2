@@ -1,6 +1,8 @@
 # 리뷰 수를 고려한 Amazon 상품 신뢰도 분석
 DACOS team3 (초보3팀) - 26-1학기 토이 프로젝트
 
+![대시보드 미리보기](docs/images/대표.png)
+
 ## 프로젝트 소개
 
 온라인 쇼핑 시 누구나 겪는 고민, "리뷰 수는 적지만 평점이 높은 상품과 리뷰 수는 많지만 평점이 조금 낮은 상품 중 무엇을 선택해야 하는가"에서 출발한 프로젝트입니다. Amazon Sales Dataset을 활용해 베이지안 평균 기법으로 리뷰 신뢰도를 보정하고, 머신러닝(SHAP)으로 신뢰도에 영향을 미치는 핵심 요인을 분석했습니다.
@@ -42,18 +44,23 @@ Step 7. 대시보드 구현         (C_dashboard)
 │   ├── step1_preprocess.py
 │   ├── step2_eda.py
 │   └── step3_bayesian_target.py
+│
 ├── B_modeling/             # 피처엔지니어링, 모델링, SHAP 해석 (담당: 주현정)
 │   ├── step4_feature_engineering.py
 │   ├── step4.5_merge.py
 │   ├── step5_model_pipeline.py
 │   └── step6_shap.py
+│
 ├── C_dashboard/            # Streamlit 대시보드 (담당: 최한나)
 │   └── streamlit/
 │       ├── Home.py
 │       └── pages/
+│
 ├── data/
 │   ├── raw/                # 원본 데이터
 │   └── processed/          # 전처리 및 피처 산출물
+├── docs
+│   └── images/             # README 첨부 이미지
 ├── result/                 # 모델 성능, SHAP 결과물
 └── README.md
 ```
@@ -87,10 +94,17 @@ streamlit run Home.py
 ## 주요 결과
 
 - **모델 성능**: Linear Regression, Random Forest, XGBoost 3개 모델을 비교한 결과 **Random Forest**가 가장 우수한 성능을 보였습니다. 이는 리뷰 수와 보정 평점 사이의 관계가 단순 선형이 아니라는 것을 시사합니다.
+
 - **SHAP 분석**: 보정 평점 예측에 가장 큰 영향을 미치는 요인은 **리뷰 수(log_rating_count)**였으며, 다른 요인들과 뚜렷한 격차를 보였습니다.
+
 - **비선형 패턴 발견**: 리뷰 수가 수백~수천 개 구간을 지날 때 신뢰도가 급격히 상승하는 임계 구간이 확인되었습니다.
+
 - **카테고리별 차이**: 이어폰·헤드폰(Headphones,Earbuds&Accessories) 카테고리는 "적은 리뷰 + 높은 평점" 패턴이 특히 두드러졌습니다.
+
 - **대시보드**: 위 분석 결과를 실제로 체험할 수 있는 인터랙티브 대시보드(EDA 탐색, 모델 인사이트, 구매 가이드 계산기)를 구현했습니다.
+
+![대시보드 미리보기](docs/images/guide.png)
+
 
 ## 팀원 및 역할
 
